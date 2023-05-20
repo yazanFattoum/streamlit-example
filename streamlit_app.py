@@ -1,38 +1,54 @@
-from collections import namedtuple
-import altair as alt
-import math
-import pandas as pd
+
 import streamlit as st
+import openai
 
+# Set up OpenAI API
+openai.api_key = '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'
+
+# Define the prompt for code completion
+prompt = """
+You are a software developer working on a project. You need code completion suggestions to help you write code more efficiently.
+
+Code:
+def calculate_average(numbers):
+    total = sum(numbers)
+    average = total / len(numbers)
+    return average
+
+Please provide code completion suggestions for the following line:
+average = 
 """
-# Welcome to Streamlit!
 
-Edit `/streamlit_app.py` to customize this app to your heart's desire :heart:
+# Generate code completion suggestions
+def generate_code_completion(prompt):
+    response = openai.Completion.create(
+        engine='text-davinci-003',
+        prompt=prompt,
+        max_tokens=100,
+        n=5,  # Number of completions to generate
+        stop=None,
+        temperature=0.7
+    )
+    completions = [choice['text'].strip() for choice in response['choices']]
+    return completions
 
-If you have any questions, checkout our [documentation](https://docs.streamlit.io) and [community
-forums](https://discuss.streamlit.io).
+# Streamlit app
+def main():
+    st.title("Code Completion with ChatGPT")
 
-In the meantime, below is an example of what you can do with just a few lines of code:
-"""
+    # Display the prompt
+    st.markdown("### Prompt:")
+    st.code(prompt)
 
+    # Generate code completions on button click
+    if st.button("Get Code Completions"):
+        completions = generate_code_completion(prompt)
 
-with st.echo(code_location='below'):
-    total_points = st.slider("Number of points in spiral", 1, 5000, 2000)
-    num_turns = st.slider("Number of turns in spiral", 1, 100, 9)
+        # Display code completion suggestions
+        st.markdown("### Code Completions:")
+        for i, completion in enumerate(completions):
+            st.code(f"Suggestion {i+1}: {completion}")
 
-    Point = namedtuple('Point', 'x y')
-    data = []
-
-    points_per_turn = total_points / num_turns
-
-    for curr_point_num in range(total_points):
-        curr_turn, i = divmod(curr_point_num, points_per_turn)
-        angle = (curr_turn + 1) * 2 * math.pi * i / points_per_turn
-        radius = curr_point_num / total_points
-        x = radius * math.cos(angle)
-        y = radius * math.sin(angle)
-        data.append(Point(x, y))
-
-    st.altair_chart(alt.Chart(pd.DataFrame(data), height=500, width=500)
-        .mark_circle(color='#0068c9', opacity=0.5)
-        .encode(x='x:Q', y='y:Q'))
+# Run the Streamlit app
+if __name__ == "__main__":
+    main()
