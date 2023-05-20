@@ -1,54 +1,36 @@
-
 import streamlit as st
 import openai
 
-# Set up OpenAI API
-openai.api_key = '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'
+# Set up OpenAI API credentials
+openai.api_key = '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'
 
-# Define the prompt for code completion
-prompt = """
-You are a software developer working on a project. You need code completion suggestions to help you write code more efficiently.
-
-Code:
-def calculate_average(numbers):
-    total = sum(numbers)
-    average = total / len(numbers)
-    return average
-
-Please provide code completion suggestions for the following line:
-average = 
-"""
-
-# Generate code completion suggestions
-def generate_code_completion(prompt):
+# Function to complete code
+def complete_code(prompt):
     response = openai.Completion.create(
-        engine='text-davinci-003',
+        engine='text-davinci-003',  # Code-Davinci model
         prompt=prompt,
-        max_tokens=100,
+        max_tokens=100,  # Adjust as needed
+        temperature=0.7,  # Adjust as needed
         n=5,  # Number of completions to generate
-        stop=None,
-        temperature=0.7
+        stop=None   # Specify custom stop tokens if needed 
     )
-    completions = [choice['text'].strip() for choice in response['choices']]
+    completions = [choice['text'].strip() for choice in response.choices]
     return completions
 
 # Streamlit app
 def main():
-    st.title("Code Completion with ChatGPT")
+    st.title("Code Completion")
 
-    # Display the prompt
-    st.markdown("### Prompt:")
-    st.code(prompt)
+    # User input for code snippet
+    prompt = st.text_area("Enter code snippet:", height=200)
 
-    # Generate code completions on button click
-    if st.button("Get Code Completions"):
-        completions = generate_code_completion(prompt)
-
-        # Display code completion suggestions
-        st.markdown("### Code Completions:")
-        for i, completion in enumerate(completions):
-            st.code(f"Suggestion {i+1}: {completion}")
+    if st.button("Complete"):
+        if prompt:
+            completions = complete_code(prompt)
+            st.subheader("Completions:")
+            for i, completion in enumerate(completions, start=1):
+                st.code(f"Completion {i}:\n{completion}", language="python")
 
 # Run the Streamlit app
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
