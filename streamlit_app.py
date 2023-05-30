@@ -1,12 +1,12 @@
 import streamlit as st
-import openai
+#import openai
 
 # Set up OpenAI API credentials
-openai.api_key = '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'
+#openai.api_key = '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'
 
 # Function to complete code
 def complete_code(prompt):
-    response = openai.Completion.create(
+    response = model.Completion.create(
         engine='text-davinci-003',  # Code-Davinci model
         prompt=prompt,
         max_tokens=100,  # Adjust as needed
