@@ -2,7 +2,7 @@ import streamlit as st
 import openai
 
 # Set up OpenAI API credentials
-openai.api_key = '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'
+openai.api_key = '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'
 
 # Function to complete code
 def complete_code(prompt):
