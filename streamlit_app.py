@@ -82,8 +82,7 @@ def main():
                 st.code(f"{completion}", language="java")  # change language if needed
         except Exception as e:
             # Show the real error in the UI so you can debug
-            st.error("The request failed.")
-            st.exception(e)
+            st.error("The request failed.") 
 
 # Run the Streamlit app
 if __name__ == '__main__':
