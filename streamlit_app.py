@@ -1,14 +1,10 @@
-import os
 import requests
 import streamlit as st
- 
- 
-def complete_code(prompt, n=5, max_new_tokens=100, temperature=0.7, stop=None):
-    
 
-    headers = {"Authorization": f"Bearer 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"}
-    api_url = f"https://api-inference.huggingface.co/models/google/codegemma-2b"
+API_URL = "https://api-inference.huggingface.co/models/google/codegemma-2b"
+HEADERS = {"Authorization": "Bearer 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"}
 
+def complete_code(prompt, n=3, max_new_tokens=100, temperature=0.7):
     payload = {
         "inputs": prompt,
         "parameters": {
@@ -17,66 +13,30 @@ def complete_code(prompt, n=5, max_new_tokens=100, temperature=0.7, stop=None):
             "top_p": 0.95,
             "do_sample": True,
             "num_return_sequences": n,
-            "return_full_text": False,   # only the completion
-            "stop": stop or []           # optional: e.g., ["\n\n", "\n}"]
+            "return_full_text": False
         }
     }
+    response = requests.post(API_URL, headers=HEADERS, json=payload, timeout=60)
+    response.raise_for_status()
+    data = response.json()
+    return [item.get("generated_text", "").strip() for item in data if "generated_text" in item]
 
-    resp = requests.post(api_url, headers=headers, json=payload, timeout=120)
-    resp.raise_for_status()
-    data = resp.json()
+# Streamlit UI
+st.title("💻 Code Completion with Hugging Face")
 
-    # The Inference API usually returns a list of dicts with "generated_text"
-    completions = []
-    if isinstance(data, list):
-        for item in data:
-            text = item.get("generated_text", "")
-            if isinstance(text, str) and text.strip():
-                completions.append(text.strip())
-    elif isinstance(data, dict) and "error" in data:
-        # Model not ready / license not accepted / throttled, etc.
-        raise RuntimeError(data["error"])
+prompt = st.text_area("Enter your code snippet:", height=200)
+n = st.slider("Number of completions", 1, 5, 3)
+max_tokens = st.slider("Max new tokens", 16, 512, 100, step=16)
+temperature = st.slider("Temperature", 0.0, 1.5, 0.7, step=0.05)
 
-    return completions
-
-# --------------------------------
-# Streamlit app
-# --------------------------------
-def main():
-    st.title("Code Completion (Hugging Face Inference API)")
-
-    # Optional controls
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        n = st.number_input("Number of completions", 1, 10, 5, step=1)
-    with col2:
-        max_new_tokens = st.slider("Max new tokens", 16, 512, 100, step=16)
-    with col3:
-        temperature = st.slider("Temperature", 0.0, 1.5, 0.7, step=0.05)
-
-    # User input for code snippet
-    prompt = st.text_area("Enter code snippet (the model will continue from here):", height=200)
-
-    if st.button("Complete"):
-        if not prompt.strip():
-            st.warning("Please enter some code to complete.")
-            return
+if st.button("Generate"):
+    if not prompt.strip():
+        st.warning("Please enter some code.")
+    else:
         try:
-            completions = complete_code(
-                prompt,
-                n=int(n),
-                max_new_tokens=int(max_new_tokens),
-                temperature=float(temperature),
-                stop=None,  # add stop sequences here if you want
-            )
+            completions = complete_code(prompt, n, max_tokens, temperature)
             st.subheader("Completions:")
-            for i, completion in enumerate(completions, start=1):
-                st.code(f"{completion}", language="java")  # change language if needed
+            for i, text in enumerate(completions, start=1):
+                st.code(text, language="python")
         except Exception as e:
-            # Show the real error in the UI so you can debug
-            st.error("The request failed.")
-            st.exception(e)
-
-# Run the Streamlit app
-if __name__ == '__main__':
-    main()
+            st.error(f"Error: {e}")
