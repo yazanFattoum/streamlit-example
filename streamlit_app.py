@@ -7,7 +7,7 @@ import streamlit as st
 # --------------------------------
 MODEL_ID = "google/codegemma-2b"   # or: "google/codegemma-7b" / "google/codegemma-7b-it"
 # Token is read from Streamlit Secrets first, then environment
-HF_API_TOKEN = "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"
+HF_API_TOKEN = "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"
 
 # --------------------------------
 # Function to complete code via HF
