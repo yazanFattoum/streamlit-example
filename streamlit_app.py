@@ -1,98 +1,68 @@
-import os
-import requests
 import streamlit as st
+from huggingface_hub import InferenceClient
+import os
 
-# --------------------------------
-# Config: choose a model and token
-# --------------------------------
-MODEL_ID = "google/codegemma-2b"   # or: "google/codegemma-7b" / "google/codegemma-7b-it"
-# Token is read from Streamlit Secrets first, then environment
-HF_API_TOKEN = "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"
+# ---------------------------
+# Config
+# ---------------------------
+DEFAULT_MODELS = [
+    "bigcode/starcoder2-3b",
+    "bigcode/starcoder2-15b",
+    "deepseek-ai/DeepSeek-Coder-V2-Lite-Instruct",
+    "codellama/CodeLlama-7b-Instruct-hf"
+]
 
-# --------------------------------
-# Function to complete code via HF
-# --------------------------------
-def complete_code(prompt, n=5, max_new_tokens=100, temperature=0.7, stop=None):
-    """
-    Calls Hugging Face Inference API to generate code completions.
-    """
-    if not HF_API_TOKEN:
-        raise RuntimeError(
-            "HF_API_TOKEN is missing. Add it in .streamlit/secrets.toml "
-            "or set the environment variable HF_API_TOKEN."
-        )
+def get_token():
+    try:
+        return st.secrets["HF_API_TOKEN"]
+    except KeyError:
+        return os.getenv("HF_API_TOKEN")
 
-    headers = {"Authorization": f"Bearer {HF_API_TOKEN}"}
-    api_url = f"https://api-inference.huggingface.co/models/{MODEL_ID}"
+# ---------------------------
+# Streamlit UI
+# ---------------------------
+st.set_page_config(page_title="Code Completion", page_icon="💻", layout="wide")
+st.title("💻 Hugging Face Code Completion")
 
-    payload = {
-        "inputs": prompt,
-        "parameters": {
-            "max_new_tokens": max_new_tokens,
-            "temperature": temperature,
-            "top_p": 0.95,
-            "do_sample": True,
-            "num_return_sequences": n,
-            "return_full_text": False,   # only the completion
-            "stop": stop or []           # optional: e.g., ["\n\n", "\n}"]
-        }
-    }
+token = get_token()
+if not token:
+    st.warning("Please set HF_API_TOKEN in Streamlit secrets or environment.")
 
-    resp = requests.post(api_url, headers=headers, json=payload, timeout=120)
-    resp.raise_for_status()
-    data = resp.json()
+model = st.selectbox("Choose a model", DEFAULT_MODELS)
+prompt = st.text_area("Enter your code snippet:", height=200, placeholder="def fibonacci(n):\n    ")
 
-    # The Inference API usually returns a list of dicts with "generated_text"
-    completions = []
-    if isinstance(data, list):
-        for item in data:
-            text = item.get("generated_text", "")
-            if isinstance(text, str) and text.strip():
-                completions.append(text.strip())
-    elif isinstance(data, dict) and "error" in data:
-        # Model not ready / license not accepted / throttled, etc.
-        raise RuntimeError(data["error"])
+col1, col2, col3 = st.columns(3)
+with col1:
+    n = st.number_input("Number of completions", 1, 5, 3)
+with col2:
+    max_tokens = st.slider("Max new tokens", 16, 512, 128, step=16)
+with col3:
+    temperature = st.slider("Temperature", 0.0, 1.5, 0.4, step=0.05)
 
-    return completions
-
-# --------------------------------
-# Streamlit app
-# --------------------------------
-def main():
-    st.title("Code Completion (Hugging Face Inference API)")
-
-    # Optional controls
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        n = st.number_input("Number of completions", 1, 10, 5, step=1)
-    with col2:
-        max_new_tokens = st.slider("Max new tokens", 16, 512, 100, step=16)
-    with col3:
-        temperature = st.slider("Temperature", 0.0, 1.5, 0.7, step=0.05)
-
-    # User input for code snippet
-    prompt = st.text_area("Enter code snippet (the model will continue from here):", height=200)
-
-    if st.button("Complete"):
-        if not prompt.strip():
-            st.warning("Please enter some code to complete.")
-            return
+if st.button("Generate"):
+    if not prompt.strip():
+        st.error("Please enter some code.")
+    elif not token:
+        st.error("Missing Hugging Face token.")
+    else:
         try:
-            completions = complete_code(
-                prompt,
-                n=int(n),
-                max_new_tokens=int(max_new_tokens),
-                temperature=float(temperature),
-                stop=None,  # add stop sequences here if you want
-            )
-            st.subheader("Completions:")
-            for i, completion in enumerate(completions, start=1):
-                st.code(f"{completion}", language="java")  # change language if needed
-        except Exception as e:
-            # Show the real error in the UI so you can debug
-            st.error("The request failed.")
-            st.exception(e)
+            client = InferenceClient(provider="auto", api_key=token)
+            st.info("Generating completions...")
+            completions = []
+            for _ in range(n):
+                text = client.text_generation(
+                    prompt,
+                    model=model,
+                    max_new_tokens=max_tokens,
+                    temperature=temperature
+                )
+                completions.append(text.strip())
 
-# Run the Streamlit app
-if __name__ == '__main__':
-    main()
+            st.subheader("Completions")
+            lang = "python" if "def " in prompt else "java"
+            for i, comp in enumerate(completions, 1):
+                st.markdown(f"**Completion {i}**")
+                st.code(comp, language=lang)
+        except Exception as e:
+            st.error("Error during generation.")
+            st.exception(e)
