@@ -73,8 +73,8 @@ def main():
             completions = complete_code(
                 prompt,
                 n=5,
-                max_new_tokens=int(max_new_tokens),
-                temperature=float(temperature),
+                max_new_tokens=int(100),
+                temperature=float(0.7),
                 stop=None,  # add stop sequences here if you want
             )
             st.subheader("Completions:")
