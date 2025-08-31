@@ -28,11 +28,11 @@ def complete_code(prompt, n=5, max_new_tokens=100, temperature=0.7, stop=None):
     payload = {
         "inputs": prompt,
         "parameters": {
-            "max_new_tokens": max_new_tokens,
-            "temperature": temperature,
+            "max_new_tokens": 100,
+            "temperature": 0.7,
             "top_p": 0.95,
             "do_sample": True,
-            "num_return_sequences": n,
+            "num_return_sequences": 5,
             "return_full_text": False,   # only the completion
             "stop": stop or []           # optional: e.g., ["\n\n", "\n}"]
         }
@@ -61,14 +61,7 @@ def complete_code(prompt, n=5, max_new_tokens=100, temperature=0.7, stop=None):
 def main():
     st.title("YJCC Code Completion Tool")
 
-    # Optional controls
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        n = st.number_input("Number of completions", 1, 10, 5, step=1)
-    with col2:
-        max_new_tokens = st.slider("Max new tokens", 16, 512, 100, step=16)
- 
-
+    
     # User input for code snippet
     prompt = st.text_area("Enter code snippet (the model will continue from here):", height=200)
 
