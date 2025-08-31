@@ -72,7 +72,7 @@ def main():
         try:
             completions = complete_code(
                 prompt,
-                n=int(n),
+                n=5,
                 max_new_tokens=int(max_new_tokens),
                 temperature=float(temperature),
                 stop=None,  # add stop sequences here if you want
