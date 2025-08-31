@@ -1,29 +1,13 @@
 import os
 import requests
 import streamlit as st
-
-# --------------------------------
-# Config: choose a model and token
-# --------------------------------
-MODEL_ID = "google/codegemma-2b"   # or: "google/codegemma-7b" / "google/codegemma-7b-it"
-# Token is read from Streamlit Secrets first, then environment
-HF_API_TOKEN = "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"
-
-# --------------------------------
-# Function to complete code via HF
-# --------------------------------
+ 
+ 
 def complete_code(prompt, n=5, max_new_tokens=100, temperature=0.7, stop=None):
-    """
-    Calls Hugging Face Inference API to generate code completions.
-    """
-    if not HF_API_TOKEN:
-        raise RuntimeError(
-            "HF_API_TOKEN is missing. Add it in .streamlit/secrets.toml "
-            "or set the environment variable HF_API_TOKEN."
-        )
+    
 
-    headers = {"Authorization": f"Bearer {HF_API_TOKEN}"}
-    api_url = f"https://api-inference.huggingface.co/models/{MODEL_ID}"
+    headers = {"Authorization": f"Bearer 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"}
+    api_url = f"https://api-inference.huggingface.co/models/google/codegemma-2b"
 
     payload = {
         "inputs": prompt,
