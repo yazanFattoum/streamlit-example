@@ -23,7 +23,7 @@ def complete_code(prompt, n=5, max_new_tokens=100, temperature=0.7, stop=None):
         )
 
     headers = {"Authorization": f"Bearer {HF_API_TOKEN}"}
-    api_url = f"https://api-inference.huggingface.co/models/{MODEL_ID}"
+    api_url = f"https://api-inference.huggingfacey.co/models/{MODEL_ID}"
 
     payload = {
         "inputs": prompt,
@@ -59,7 +59,7 @@ def complete_code(prompt, n=5, max_new_tokens=100, temperature=0.7, stop=None):
 # Streamlit app
 # --------------------------------
 def main():
-    st.title("Code Completion (Hugging Face Inference API)")
+    st.title("YJCC Code Completion Tool")
 
     # Optional controls
     col1, col2, col3 = st.columns(3)
@@ -67,8 +67,7 @@ def main():
         n = st.number_input("Number of completions", 1, 10, 5, step=1)
     with col2:
         max_new_tokens = st.slider("Max new tokens", 16, 512, 100, step=16)
-    with col3:
-        temperature = st.slider("Temperature", 0.0, 1.5, 0.7, step=0.05)
+ 
 
     # User input for code snippet
     prompt = st.text_area("Enter code snippet (the model will continue from here):", height=200)
